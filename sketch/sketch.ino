@@ -42,15 +42,25 @@ bool proto_wait(char confirm_magic, void(*before_try)()) {
     return true;
 }
 
+void print_motd(bool is_reset) {
+    Serial.print("Hello version=");
+    Serial.print(VERSION);
+    if (is_reset) {
+        Serial.print(" after reset");
+    }
+    Serial.println("");
+}
+
 void _proto_init_before_try() {
     Serial.print(MAGIC_INIT);
     Serial.println(PROTOCOL_VERSION);
 }
 
-void proto_init() {
+void proto_init(bool is_reset) {
     while (!proto_wait(MAGIC_INIT, _proto_init_before_try)) {
         /* received reset; retry */
     }
+    print_motd(is_reset);
 }
 
 //////////
@@ -59,10 +69,21 @@ void proto_init() {
 
 void setup() {
     Serial.begin(BAUD_RATE);
-    proto_init();
+    proto_init(false);
+}
+
+void _loop_before_try() {
+    /* nop */
 }
 
 void loop() {
+  loop_begin:
+    Serial.println("Looped message with delivery confirmation");
+    if (!proto_wait(MAGIC_PING, _loop_before_try)) {
+        Serial.end();
+        Serial.begin(BAUD_RATE);
+        proto_init(true);
+        goto loop_begin;
+    }
     delay(LOOP_DELAY_MS);
-    Serial.println("Empty loop");
 }
