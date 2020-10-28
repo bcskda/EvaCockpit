@@ -8,6 +8,7 @@ class Config:
     commands: Dict[int, Command]
     services: Dict[int, SystemdService]
     baud_rate: int = 9600
+    timeout: float = None # Wait forever
     
     @classmethod
     def from_conf_object(cls, conf_dict, params):
