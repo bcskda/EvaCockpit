@@ -1,0 +1,9 @@
+{
+    "commands": {
+        "0": {
+            "name": "ls",
+            "cmdline": ["ls"]
+        }
+    },
+    "services": {}
+}
