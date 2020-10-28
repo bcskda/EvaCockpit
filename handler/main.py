@@ -1,11 +1,11 @@
 import argparse
+import protocol
 import sys
-import time
 from config import setup
 from logger import init_logger, get_logger
-import serial
+from serial import Serial
 
-logger = get_logger()
+logger = get_logger(__name__)
 
 def parse_cmdline(argv):
     parser = argparse.ArgumentParser()
@@ -19,21 +19,12 @@ def main(args):
     config = setup(args.config, args.params)
     logger.info(config)
     logger.info("Watching serial %s", args.dev)
-    with serial.Serial(args.dev, config.baud_rate, timeout=100) as dev:
-        # Init
-        while True:
-            dev.write("R".encode());
-            code = dev.read(1)
-            if code == b"I":
-                logger.info("Received [I]nit request")
-                break
-            else:
-                logger.warning("Expected [I]nit, got %s", code)
-                time.sleep(0.217)
-        dev.write("I".encode())
+    with Serial(args.dev, config.baud_rate, timeout=config.timeout) as dev:
+        hello_message = protocol.init(dev)
+        logger.info("Received hello: %s", hello_message)
         try:
             while True:
-                logger.info(dev.readline())
+                logger.info("Recv %s", protocol.readline(dev))
         except KeyboardInterrupt:
             pass
 
