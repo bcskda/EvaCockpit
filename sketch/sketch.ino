@@ -4,6 +4,7 @@
 #define WAIT_DELAY_MS (100)
 
 #define MAGIC_INIT  ('I')
+#define MAGIC_MESG  ('M')
 #define MAGIC_PING  ('P')
 #define MAGIC_RESET ('R')
 
@@ -78,6 +79,7 @@ void _loop_before_try() {
 
 void loop() {
   loop_begin:
+    Serial.write(MAGIC_MESG);
     Serial.println("Looped message with delivery confirmation");
     if (!proto_wait(MAGIC_PING, _loop_before_try)) {
         Serial.end();
