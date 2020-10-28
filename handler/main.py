@@ -20,13 +20,17 @@ def main(args):
     logger.info(config)
     logger.info("Watching serial %s", args.dev)
     with Serial(args.dev, config.baud_rate, timeout=config.timeout) as dev:
-        hello_message = protocol.init(dev)
-        logger.info("Received hello: %s", hello_message)
-        try:
-            while True:
-                logger.info("Recv %s", protocol.readline(dev))
-        except KeyboardInterrupt:
-            pass
+        while True:
+            hello_message = protocol.init(dev)
+            logger.info("Received hello: %s", hello_message)
+            try:
+                while True:
+                    logger.info("Recv %s", protocol.readline(dev))
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                logger.warning(f"Unhandled exception: {e}. Restarting.")
+                continue
 
 if __name__ == "__main__":
     main(parse_cmdline(sys.argv[1:]))
