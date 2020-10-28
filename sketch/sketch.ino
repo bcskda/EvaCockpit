@@ -1,9 +1,11 @@
 #define VERSION ("0.0.1+0")
-#define BAUD_RATE (9600)
-
 #define PROTOCOL_VERSION (1)
-#define HOST_CONFIRM_MAGIC ('O')
-#define INIT_DELAY_MS (500)
+#define BAUD_RATE (9600)
+#define WAIT_DELAY_MS (100)
+
+#define MAGIC_INIT  ('I')
+#define MAGIC_PING  ('P')
+#define MAGIC_RESET ('R')
 
 #define BTN_BEGIN (2)
 #define BTN_CNT (7)
@@ -11,19 +13,49 @@
 
 static bool gButtonState[BTN_CNT] = {};
 
-void proto_init() {
+//////////
+// Util
+//////////
+
+char read_blocking() {
+    while (Serial.available() < 1) {
+        delay(WAIT_DELAY_MS);
+    }
+    return Serial.read();
+}
+
+//////////
+// Protocol
+//////////
+
+// true ~ ok, false ~ reset
+bool proto_wait(char confirm_magic, void(*before_try)()) {
     bool host_confirm = false;
     while (!host_confirm) {
-        Serial.print("protocol ");
-        Serial.println(PROTOCOL_VERSION);
-        while (Serial.available() < 1) {
-            delay(INIT_DELAY_MS);
+        before_try();
+        char c = read_blocking();
+        if (c == MAGIC_RESET) {
+            return false;
         }
-        host_confirm = (Serial.read() == HOST_CONFIRM_MAGIC);
+        host_confirm = (c == confirm_magic);
     }
-    Serial.print("Hello version=");
-    Serial.println(VERSION);
+    return true;
 }
+
+void _proto_init_before_try() {
+    Serial.print(MAGIC_INIT);
+    Serial.println(PROTOCOL_VERSION);
+}
+
+void proto_init() {
+    while (!proto_wait(MAGIC_INIT, _proto_init_before_try)) {
+        /* received reset; retry */
+    }
+}
+
+//////////
+// Main
+//////////
 
 void setup() {
     Serial.begin(BAUD_RATE);
