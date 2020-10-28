@@ -9,8 +9,9 @@ SKIP_TIMEOUT_SEC = 2
 
 INIT_DELAY_SEC = 0.137
 
-MAGIC_INIT = b"I"
-MAGIC_PING = b"P"
+MAGIC_INIT =  b"I"
+MAGIC_MESG =  b"M"
+MAGIC_PING =  b"P"
 MAGIC_RESET = b"R"
 
 def skip_unreceived(dev: Serial, timeout_sec: float):
@@ -52,7 +53,15 @@ def init(dev: Serial):
     return dev.readline()
 
 def readline(dev):
-    """Read one line, reply with [P]ing"""
+    """
+    Read one line, reply with [P]ing
+    Throws ValueError if unexpected magic
+    """
+    magic = dev.read(1)
+    if magic != MAGIC_MESG:
+        warn = f"Unexpected magic {magic}"
+        logger.warning(warn)
+        raise ValueError(warn)
     m = dev.readline()
     dev.write(MAGIC_PING)
     return m
