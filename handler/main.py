@@ -25,7 +25,15 @@ def main(args):
             logger.info("Received hello: %s", hello_message)
             try:
                 while True:
-                    logger.info("Recv %s", protocol.readline(dev))
+                    magic, payload = protocol.readline(dev)
+                    if magic == b"M":
+                        logger.info("Recv message %s", payload)
+                    elif magic == b"C":
+                        cmd = int(payload.decode().strip())
+                        logger.info("Recv command %s", cmd)
+                        config.commands[cmd].run(log=True)
+                    else:
+                        raise ValueError(f"main: unexpected magic {magic}, mesg {payload}")
             except KeyboardInterrupt:
                 break
             except Exception as e:

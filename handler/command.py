@@ -11,7 +11,12 @@ class Command:
     cmdline: List[str]
     
     def run(self, /, log=False):
-        return check_call(self.cmdline)
+        if log:
+            logger.info("Running command %s", self.name)
+        cc = check_call(self.cmdline)
+        if log:
+            logger.info("Exited command %s", self.name)
+        return cc
 
 @dataclass
 class SystemdService:
