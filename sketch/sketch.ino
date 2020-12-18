@@ -1,4 +1,6 @@
-#define VERSION ("0.0.1+1")
+#include "rc522.h"
+
+#define VERSION ("0.0.1+2")
 #define PROTOCOL_VERSION (1)
 #define BAUD_RATE (9600)
 #define WAIT_DELAY_MS (10)
@@ -52,7 +54,8 @@ void print_motd(bool is_reset) {
     if (is_reset) {
         Serial.print(" after reset");
     }
-    Serial.println("");
+    Serial.print("; MFRC522 info: ");
+    rc522_dump_version();
 }
 
 void _proto_init_before_try() {
@@ -90,6 +93,20 @@ bool update_buttons() {
 }
 
 //////////
+// RFID
+//////////
+
+bool update_rfid() {
+    if (rc522_ready()) {
+        Serial.print(MAGIC_MESG);
+        rc522_dump_uid();
+        return proto_wait(MAGIC_PING, _loop_nop, BTN_TIMEOUT_LOOPS);
+    } else {
+        return true;
+    }
+}
+
+//////////
 // Main
 //////////
 
@@ -101,6 +118,7 @@ void reset_buttons() {
 
 void setup() {
     Serial.begin(BAUD_RATE);
+    rc522_setup();
     proto_init(false);
     reset_buttons();
 }
@@ -131,6 +149,9 @@ void loop() {
         reset();
     }
     if (!update_buttons()) {
+        reset();
+    }
+    if (!update_rfid()) {
         reset();
     }
     delay(LOOP_DELAY_MS);
