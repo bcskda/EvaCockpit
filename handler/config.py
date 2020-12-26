@@ -7,7 +7,7 @@ from command import Command, SystemdService
 class Config:
     commands: Dict[int, Command]
     services: Dict[int, SystemdService]
-    baud_rate: int = 9600
+    baud_rate: int = 115200
     timeout: float = None # Wait forever
     
     @classmethod
