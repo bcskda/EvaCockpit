@@ -1,9 +1,10 @@
 #include "rc522.h"
+#include "KeyboardDriver.h"
 
 #define VERSION ("0.0.1+2")
 #define PROTOCOL_VERSION (1)
-#define BAUD_RATE (9600)
-#define WAIT_DELAY_MS (10)
+#define BAUD_RATE (115200)
+#define WAIT_DELAY_US (10)
 
 #define MAGIC_CMD   ('C')
 #define MAGIC_INIT  ('I')
@@ -22,7 +23,7 @@
 
 char read_blocking() { // TODO timeout in read_blocking
     while (Serial.available() < 1) {
-        delay(WAIT_DELAY_MS);
+        delayMicroseconds(WAIT_DELAY_US);
     }
     return Serial.read();
 }
@@ -107,6 +108,23 @@ bool update_rfid() {
 }
 
 //////////
+// Keyboard
+//////////
+
+void kbd_callback(bool is_pressed, uint8_t scan_code) noexcept {
+    Serial.print(MAGIC_MESG);
+    if (is_pressed) {
+        Serial.print("Scan code up: ");
+    } else {
+        Serial.print("Scan code down: ");
+    }
+    Serial.println(KeyboardDriver::toChar(scan_code));
+    if (!proto_wait(MAGIC_PING, _loop_nop, BTN_TIMEOUT_LOOPS)) {
+        reset();
+    }
+}
+
+//////////
 // Main
 //////////
 
@@ -117,6 +135,7 @@ void reset_buttons() {
 }
 
 void setup() {
+    KeyboardDriver::init();
     Serial.begin(BAUD_RATE);
     rc522_setup();
     proto_init(false);
@@ -128,6 +147,7 @@ void reset() {
     Serial.begin(BAUD_RATE);
     proto_init(true);
     reset_buttons();
+    KeyboardDriver::init();
 }
 
 // true ~ reset requested
@@ -153,6 +173,8 @@ void loop() {
     }
     if (!update_rfid()) {
         reset();
-    }
-    delay(LOOP_DELAY_MS);
+    }*/
+    KeyboardDriver::loopOnce(kbd_callback);
+    // delay(LOOP_DELAY_MS);
+    // delayMicroseconds(50);
 }
