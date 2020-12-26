@@ -31,4 +31,5 @@ void rc522_dump_uid() {
     for (byte i = 0; i < size; ++i) {
         Serial.print(g_mfrc522.uid.uidByte[i], HEX);
     }
+    Serial.println();
 }
